@@ -16,7 +16,10 @@
     "compile": "tsc -p tsconfig.json",
     "clean": "rimraf dist",
     "ts": "tsc --noEmit && node --no-warnings=ExperimentalWarning --loader ts-node/esm",
-    "mock:server": "json-server ./mocks/mock-server-data.json --port 3123 --host localhost"
+    "help": "tsc --noEmit && node --no-warnings=ExperimentalWarning --loader ts-node/esm ./src/main-cli.ts --help",
+    "mock:server": "json-server ./mocks/mock-server-data.json --port 3123 --host localhost",
+    "mock:generate": "tsc --noEmit && node --no-warnings=ExperimentalWarning --loader ts-node/esm ./src/main-cli.ts --generate 50 ./mocks/mock-data.tsv http://localhost:3123/api",
+    "mock:import": "tsc --noEmit && node --no-warnings=ExperimentalWarning --loader ts-node/esm ./src/main-cli.ts --import ./mocks/mock-data.tsv admin test localhost six-cities secret"
   },
   "devDependencies": {
     "@types/convict": "6.1.6",
@@ -41,12 +44,14 @@
     "npm": ">=10"
   },
   "dependencies": {
+    "@typegoose/typegoose": "12.8.0",
     "convict": "6.2.4",
     "convict-format-with-validator": "6.2.0",
     "dayjs": "1.11.13",
     "dotenv": "16.4.5",
     "got": "14.4.2",
     "inversify": "6.0.2",
+    "mongoose": "8.7.1",
     "pino": "9.4.0",
     "reflect-metadata": "0.2.2"
   }
