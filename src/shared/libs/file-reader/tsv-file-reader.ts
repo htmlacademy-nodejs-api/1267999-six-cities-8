@@ -1,11 +1,11 @@
-import { FileReader } from '../../interface/index.js';
-import { OfferData, UserData } from '../../types/index.js';
-import { CityName, Goods, HousingType } from '../../enum/index.js';
-import { LocationData } from '../../types/location.js';
+import { FileReaderContract } from '../../interface/index.js';
+import { CityData, OfferData, UserData } from '../../types/index.js';
+import { CityName, Goods, HousingType, TypeUser } from '../../enum/index.js';
 import EventEmitter from 'node:events';
 import { createReadStream } from 'node:fs';
+import { LocationData } from '../../types/location.js';
 
-export class TSVFileReader extends EventEmitter implements FileReader {
+export class TSVFileReader extends EventEmitter implements FileReaderContract {
   private CHUNK_SIZE = 16384; // 16KB
 
   constructor(private readonly filename: string) {
@@ -18,13 +18,11 @@ export class TSVFileReader extends EventEmitter implements FileReader {
       description,
       date,
       city,
-      latitude,
-      longitude,
+      latitudeCity,
+      longitudeCity,
       previewImage,
       images,
       isPremium,
-      isFavorite,
-      rating,
       type,
       numberRooms,
       maxAdults,
@@ -33,38 +31,41 @@ export class TSVFileReader extends EventEmitter implements FileReader {
       name,
       email,
       avatarUrl,
-      password,
       typeUser,
-      numberComments,
+      latitudeOffer,
+      longitudeOffer,
     ] = line.split('\t');
-
-    console.log(numberComments);
 
     return {
       title,
       description,
       date: new Date(date),
-      city: {
-        name: city as CityName,
-        location: this.parseLocation(latitude, longitude),
-      },
+      city: this.parseLocation(city as CityName, latitudeCity, longitudeCity),
       previewImage: previewImage,
       images: this.parseArrayString(images),
       isPremium: this.parseBoolean(isPremium),
-      isFavorite: this.parseBoolean(isFavorite),
-      rating: this.parseInt(rating),
       type: type as HousingType,
       numberRooms: this.parseInt(numberRooms),
       maxAdults: this.parseInt(maxAdults),
       price: this.parseInt(price),
       goods: this.parseGoods(goods),
-      user: this.parseUser(name, email, avatarUrl, password, typeUser),
-      numberComments: this.parseInt(numberComments),
+      user: this.parseUser(name, email, avatarUrl, typeUser as TypeUser),
+      location: this.parseLocationOffer(latitudeOffer, longitudeOffer),
     };
   }
 
-  private parseLocation(latitude: string, longitude: string): LocationData {
-    return { latitude: parseFloat(latitude), longitude: parseFloat(longitude) };
+  private parseLocation(
+    city: CityName,
+    latitude: string,
+    longitude: string,
+  ): CityData {
+    return {
+      name: city,
+      location: {
+        latitude: Number(latitude),
+        longitude: Number(longitude),
+      },
+    };
   }
 
   private parseArrayString(arrayString: string): string[] {
@@ -98,15 +99,23 @@ export class TSVFileReader extends EventEmitter implements FileReader {
     name: string,
     email: string,
     avatarUrl: string,
-    password: string,
-    typeUser: string,
+    typeUser: TypeUser,
   ): UserData {
     return {
       name,
       email,
       avatarUrl,
-      password,
       typeUser,
+    };
+  }
+
+  private parseLocationOffer(
+    latitudeOffer: string,
+    longitudeOffer: string,
+  ): LocationData {
+    return {
+      latitude: Number(latitudeOffer),
+      longitude: Number(longitudeOffer),
     };
   }
 
@@ -129,7 +138,12 @@ export class TSVFileReader extends EventEmitter implements FileReader {
         importedRowCount++;
 
         const parsedOffer = this.parseLineToOffer(completeRow);
-        this.emit('line', parsedOffer);
+
+        // this.emit('line', parsedOffer);
+
+        await new Promise((resolve) => {
+          this.emit('line', parsedOffer, resolve);
+        });
       }
     }
 
